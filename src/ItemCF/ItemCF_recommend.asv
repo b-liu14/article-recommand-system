@@ -15,8 +15,7 @@ function recommend = ItemCF_recommend(train, num_user, num_article, k)
                     total_j = total_j+1;
                 end
             end
-            itemMat(i,j) = itemMat(i,j)/sqrt(total_i*total_j);
-        end
-    end      
+            
+            
     recommend=itemMat;
 end
