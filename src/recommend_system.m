@@ -42,7 +42,8 @@ if ~exist(processed_data, 'file')
         y = test_origin(i, 2);
         test_processed(x, y) = 1;
     end
-    save(processed_data, 'test_processed', 'train_processed');
+    save(processed_data, ...
+        'test_processed', 'train_processed', 'num_users', 'num_articles');
 else
     load(processed_data);
 end
