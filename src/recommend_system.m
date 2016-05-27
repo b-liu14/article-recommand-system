@@ -57,15 +57,16 @@ k = 10;
 %    (train_processed, num_users, num_articles, k);
 r_itemcf = ItemCF_recommend ...
     (train_processed, num_users, num_articles, k);
-r_content = ItemContent_recommend...
-    (train_processed, num_users, num_articles, k);
+% r_content = ItemContent_recommend...
+%     (train_processed, num_users, num_articles, k);
 % TODO: sort the recommendation by the weight.
-recommendation = ...
-    [r_usercf(:, :, 1); r_itemcf(:, :, 1); r_content(:, :, 1)];
+% recommendation = ...
+%     [r_usercf(:, :, 1); r_itemcf(:, :, 1); r_content(:, :, 1)];
+recommendation = r_itemcf;
 
 %% recommend test
 % In this part, we will test the precision and recall of our system.
-[recall, precision] = recommendation_test(recommendation, test_processed);
+[recall, precision] = recommendation_test(recommendation, test_processed,num_users,k);
 fprintf('recall = %f\n precision = %f\n', recall, precision);
 
 
