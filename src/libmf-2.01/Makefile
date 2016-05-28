@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -O3 -pthread -std=c++0x -march=native
+CXXFLAGS = -Wall -O1 -g -pthread -std=c++0x -march=native
 SHVER = 2
 
 # run `make clean all' if you change the following flags.
@@ -15,7 +15,7 @@ DFLAG = -DUSESSE
 DFLAG += -DUSEOMP
 CXXFLAGS += -fopenmp
 
-all: mf-train mf-predict
+all: mf-train mf-predict mf-recommend mf-test
 
 lib: 
 	$(CXX) -shared -Wl,-soname,libmf.so.$(SHVER) -o libmf.so.$(SHVER) mf.o 
@@ -26,8 +26,14 @@ mf-train: mf-train.cpp mf.o
 mf-predict: mf-predict.cpp mf.o
 	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
 
+mf-recommend: mf-recommend.cpp mf.o
+	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
+
+mf-test: mf-test.cpp mf.o
+	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
+
 mf.o: mf.cpp mf.h
 	$(CXX) $(CXXFLAGS) $(DFLAG) -c -fPIC -o $@ $<
 
 clean:
-	rm -f mf-train mf-predict mf.o libmf.so.$(SHVER)
+	rm -f mf-train mf-predict mf-recommend mf-test mf.o libmf.so.$(SHVER)
