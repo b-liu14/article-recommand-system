@@ -53,7 +53,7 @@ end
 % name r_usercf, r_itemcf, r_content
 fprintf('recommend\n');
 k = 10;
-%r_usercf  = UserCF_recommend ...   
+% r_usercf  = UserCF_recommend ...   
 %    (train_processed, num_users, num_articles, k);
 r_itemcf = ItemCF_recommend ...
     (train_processed, num_users, num_articles, k);
@@ -66,8 +66,8 @@ recommendation = r_itemcf;
 
 %% recommend test
 % In this part, we will test the precision and recall of our system.
-[recall, precision] = recommendation_test(recommendation, test_processed,num_users,k);
-fprintf('recall = %f\n precision = %f\n', recall, precision);
+[precision, recall] = recommendation_test(recommendation, test_processed,num_users,k);
+% fprintf('recall = %f\n precision = %f\n', recall, precision);
 
 
 
