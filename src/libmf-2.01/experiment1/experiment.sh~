@@ -1,0 +1,10 @@
+#!/bin/sh
+train=../mf-train
+predict=../mf-predict
+model=model.txt
+data_train=train.txt
+data_test=test.txt
+
+rm -f model.txt
+$train -r 0.1 -f 10 -l2 0.070 -k 32 -t 200 $data_train $model
+$predict $data_test $model output.txt
