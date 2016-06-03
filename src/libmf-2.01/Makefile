@@ -15,7 +15,7 @@ DFLAG = -DUSESSE
 DFLAG += -DUSEOMP
 CXXFLAGS += -fopenmp
 
-all: mf-train mf-predict mf-recommend mf-test
+all: mf-train mf-predict mf-recommend mf-test preprocess
 
 lib: 
 	$(CXX) -shared -Wl,-soname,libmf.so.$(SHVER) -o libmf.so.$(SHVER) mf.o 
@@ -30,6 +30,9 @@ mf-recommend: mf-recommend.cpp mf.o
 	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
 
 mf-test: mf-test.cpp mf.o
+	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
+
+preprocess: preprocess.cpp mf.o
 	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
 
 mf.o: mf.cpp mf.h

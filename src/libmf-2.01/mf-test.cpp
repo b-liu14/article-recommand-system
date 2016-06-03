@@ -13,9 +13,9 @@ using namespace std;
 using namespace mf;
 struct Option
 {
-    Option() : eval(RMSE) {}
-    string test_path, model_path, recommend_path, output_path, list_path;
-    mf_int eval, recommend_number, output_gap;
+    Option() :output_gap(1) {}
+    string answer_path, model_path, recommend_path, output_path, list_path;
+    mf_int output_gap;
 };
 
 string predict_help()
@@ -50,33 +50,7 @@ Option parse_option(int argc, char **argv)
     mf_int i;
     for(i = 1; i < argc; i++)
     {
-        if(args[i].compare("-e") == 0)
-        {
-            if((i+1) >= argc)
-                throw invalid_argument("need to specify evaluation criterion after -e");
-            i++;
-            option.eval = atoi(argv[i]);
-            if(option.eval != RMSE &&
-               option.eval != MAE &&
-               option.eval != GKL &&
-               option.eval != LOGLOSS &&
-               option.eval != ACC &&
-               option.eval != ROW_AUC &&
-               option.eval != COL_AUC &&
-               option.eval != ROW_MPR &&
-               option.eval != COL_MPR)
-                throw invalid_argument("unknown evaluation criterion");
-        }
-	else if(args[i].compare("-k") == 0)
-        {
-            if((i+1) >= argc)
-                throw invalid_argument("need to specify recommend number after -k");
-            i++;
-            option.recommend_number = atoi(argv[i]);
-            if(option.recommend_number < 0)
-                throw invalid_argument("unknown recommend number");
-        }
-	else if(args[i].compare("-g") == 0)
+        if(args[i].compare("-g") == 0)
         {
             if((i+1) >= argc)
                 throw invalid_argument("need to specify output gap after -g");
@@ -90,33 +64,16 @@ Option parse_option(int argc, char **argv)
     }
     if(i >= argc-4)
         throw invalid_argument("testing data, model file and recommend file not specified");
-    option.test_path = string(args[i++]);
+    option.answer_path = string(args[i++]);
     option.model_path = string(args[i++]);
     option.recommend_path = string(args[i++]);
     option.list_path = string(args[i++]);
-
-    if(i < argc)
-    {
-        option.output_path = string(args[i]);
-    }
-    else if(i == argc)
-    {
-        const char *ptr = strrchr(&*option.test_path.begin(), '/');
-        if(!ptr)
-            ptr = option.test_path.c_str();
-        else
-            ++ptr;
-        option.output_path = string(ptr) + ".out";
-    }
-    else
-    {
-        throw invalid_argument("invalid argument");
-    }
+    option.output_path = string(args[i++]);
 
     return option;
 }
 
-void test(string test_path, string model_path, string recommend_path, string list_path, string output_path, mf_int eval, mf_int recommend_number, mf_int output_gap)
+void test(string answer_path, string model_path, string recommend_path, string list_path, string output_path, mf_int output_gap)
 {
 	ofstream f_out(output_path);
     	if(!f_out.is_open())
@@ -125,53 +82,50 @@ void test(string test_path, string model_path, string recommend_path, string lis
     	mf_model *model = mf_load_model(model_path.c_str());
     	if(model == nullptr)
         	throw runtime_error("cannot load model from " + model_path);
-	mf_int testNum = 251;
 
 	ifstream recommendFile(recommend_path);
-	ifstream testFile(test_path);
+    mf_problem ans = read_problem(answer_path);
 	ofstream calFile(output_path);
 	ofstream listFile(list_path, ios::app);
 	vector<int> recommend;
-	vector<int> test;
+	vector< vector<int> > test(model->m);
 	double precision;
 	double recall;
 	double average_precision = 0.0;
 	double average_recall = 0.0;
-	for (mf_int i = 0; i < model->m; ++i)
+    for (mf_int i = 0; i < ans.nnz; ++i)
+    {
+        test[ans.R[i].u].push_back(ans.R[i].v);
+    }
+	for (mf_int i = 1; i < model->m; ++i)
 	{
 		if(output_gap >= 0 && i % output_gap == 0)
 			cout << "measure: " << i << endl;
 		recommend.clear();
-		test.clear();
 		int cal = 0;
-		for (mf_int j = 0;j < testNum;j++)
+        mf_int a,b;
+        char tmp;
+        recommendFile >> a >> tmp;
+        for (mf_int j = 0;j < 5;j++)
+        {
+            if (j < 4)
+                recommendFile >> b >> tmp;
+            else
+                recommendFile >> b;
+            recommend.push_back(b);
+        }
+		for (mf_int j = 0; j < 5;j++)
 		{
-			mf_int a,b;
-			double temp;
-			if (j < recommend_number)
-			{
-				recommendFile >> a;
-				recommendFile >> b;
-				recommendFile >> temp;
-				recommend.push_back(b);
-			}
-			testFile >> a;
-			testFile >> b;
-			testFile >> temp;
-			test.push_back(b);
-		}
-		for (mf_int j = 0; j < recommend_number;j++)
-		{
-			if (find(test.begin(),test.end(),recommend[j]) != test.end())
+			if (find(test[i].begin(),test[i].end(),recommend[j]) != test[i].end())
 			{
 				cal++;
 			}
 		}
-		precision = (double)cal/recommend_number;
-		recall = (double)cal/testNum;
+		precision = (double)cal/5;
+		recall = (double)cal/test[i].size();
 		average_precision += precision;
 		average_recall += recall;
-		calFile << i+1 << ' ' << precision << ' ' << recall << endl;
+		calFile << i << ' ' << precision << ' ' << recall << endl;
 	}
 	average_precision = average_precision / model->m;
 	average_recall = average_recall / model->m;
@@ -198,7 +152,7 @@ int main(int argc, char **argv)
 
     try
     {
-        test(option.test_path, option.model_path, option.recommend_path, option.list_path, option.output_path, option.eval, option.recommend_number, option.output_gap);
+        test(option.answer_path, option.model_path, option.recommend_path, option.list_path, option.output_path, option.output_gap);
     }
     catch(runtime_error &e)
     {
